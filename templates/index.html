@@ -1,1 +1,55 @@
-<!DOCTYPE html><html><head><title>幸運賽模擬器</title></head><body><h1>幸運賽模擬器</h1></body></html>
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>幸運賽模擬器</title>
+  <style>
+    body { font-family: 'Arial', sans-serif; padding: 20px; background-color: #f2f2f2; text-align: center; margin: 0; }
+    .table-container { position: relative; width: 100%; max-width: 800px; aspect-ratio: 16 / 10; margin: 0 auto; background: #cc6600; border-radius: 50% / 30%; }
+    .player { position: absolute; font-size: 3.5vw; text-align: center; transform: translate(-50%, -50%); white-space: nowrap; }
+    .card { display: inline-block; margin: 0 2px; padding: 6px 10px; border-radius: 8px; color: white; font-weight: bold; font-size: 3.5vw; }
+    .highlight { box-shadow: 0 0 5px 3px yellow; }
+    .♣ { background-color: green; } .♠ { background-color: black; } .♦ { background-color: blue; } .♥ { background-color: red; }
+    button, select { padding: 10px 20px; font-size: 4vw; margin: 10px; }
+    @media (min-width: 600px) { .player { font-size: 18px; } .card { font-size: 18px; } button, select { font-size: 16px; } }
+  </style>
+</head>
+<body>
+  <h1 style="font-size: 5vw;">幸運賽模擬器</h1>
+  <label for="playerCount">玩家人數：</label>
+  <select id="playerCount">
+    <option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option>
+  </select>
+  <button onclick="deal()">重新發牌</button>
+  <div class="table-container" id="output"></div>
+  <script>
+    const suits = ['♣','♠','♦','♥'], ranks = ['A','K','Q','J','10','9','8','7','6','5','4','3','2'];
+    let currentHands = [];
+    function createDeck(){let deck=[];for(let s of suits){for(let r of ranks){deck.push(r+s);}}return deck;}
+    function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}}
+    function getRankIndex(card){return ranks.indexOf(card.slice(0,-1));}
+    async function deal(){
+      const o=document.getElementById('output');o.innerHTML='';let d=createDeck();shuffle(d);
+      const n=parseInt(document.getElementById('playerCount').value), h=[];
+      for(let i=0;i<n;i++){let hand=[];for(let j=0;j<3;j++){hand.push(d.pop());}hand.sort((a,b)=>getRankIndex(a)-getRankIndex(b));h.push(hand);}
+      currentHands=h;const best=await fetchBestCombos(h);
+      const c=document.querySelector('.table-container'), r=c.getBoundingClientRect(), cx=r.width/2, cy=r.height/2, a=r.width/2.5, b=r.height/2.5;
+      for(let i=0;i<n;i++){
+        const ang=(2*Math.PI/n)*i-Math.PI/2,x=cx+a*Math.cos(ang),y=cy+b*Math.sin(ang);
+        const div=document.createElement('div');div.className='player';div.style.left=`${x}px`;div.style.top=`${y}px`;
+        const name=document.createElement('div');name.textContent=`Player ${i+1}`;div.appendChild(name);
+        const rate=document.createElement('div');rate.style.fontSize='0.8em';rate.textContent=`勝率：${best[i].win_rate}%`;div.appendChild(rate);
+        const cardRow=document.createElement('div');cardRow.style.display='inline-block';
+        for(let card of h[i]){const span=document.createElement('span');const s=card.slice(-1);span.className=`card ${s}`;span.textContent=card;if(best[i]&&best[i].best_cards.includes(card)){span.classList.add('highlight');}cardRow.appendChild(span);}
+        div.appendChild(cardRow);o.appendChild(div);
+      }
+    }
+    async function fetchBestCombos(hands){
+      try{const res=await fetch('/bestcombo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({players:hands})});return await res.json();}
+      catch(e){console.error('後端無法連線',e);return hands.map(()=>({best_cards:[],win_rate:0}));}
+    }
+    deal();
+  </script>
+</body>
+</html>

@@ -30,13 +30,11 @@ def simulate_best_combo(all_players_hands):
         for combo in itertools.combinations(hand, 2):
             wins = 0
             for _ in range(SIMULATIONS):
-                opponents = [convert_to_treys(random.sample(h, 2)) if i != idx else convert_to_treys(combo)
-                             for i, h in enumerate(all_players_hands)]
+                opponents = [convert_to_treys(random.sample(h, 2)) if i != idx else convert_to_treys(combo) for i, h in enumerate(all_players_hands)]
                 deck = Deck()
-                for h in opponents:
-                    for c in h:
-                        if c in deck.cards:
-                            deck.cards.remove(c)
+                for c in hand:
+                    if c in deck.cards:
+                        deck.cards.remove(c)
                 board = deck.draw(5)
                 scores = [evaluator.evaluate(b, board) for b in opponents]
                 best = min(scores)
