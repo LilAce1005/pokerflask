@@ -1,18 +1,13 @@
 from flask import Flask, request, jsonify, render_template
+import itertools, random
+
 from treys import Evaluator, Card, Deck
-import itertools
-import random
 
 app = Flask(__name__)
 evaluator = Evaluator()
 SIMULATIONS = 1000
 
-SUIT_SYMBOLS = {
-    's': '♠',
-    'h': '♥',
-    'd': '♦',
-    'c': '♣'
-}
+SUIT_SYMBOLS = {'s': '♠','h': '♥','d': '♦','c': '♣'}
 SUIT_MAP = {v: k for k, v in SUIT_SYMBOLS.items()}
 
 def convert_to_treys(cards):
@@ -23,10 +18,12 @@ def convert_to_treys(cards):
         converted.append(Card.new(rank + suit))
     return converted
 
-def convert_to_symbol(card_str):
-    rank = card_str[0] if card_str[1] != '0' else '10'
-    suit_letter = card_str[-1].lower()
-    return rank + SUIT_SYMBOLS.get(suit_letter, '?')
+def convert_to_symbol(card_int):
+    rank_int = Card.get_rank_int(card_int)
+    suit_int = Card.get_suit_int(card_int)
+    rank = Card.STR_RANKS[rank_int]
+    suit = SUIT_SYMBOLS.get("shdc"[suit_int], '?')
+    return rank + suit
 
 def simulate_best_combo(all_players_hands):
     best_combos = []
@@ -55,7 +52,7 @@ def simulate_best_combo(all_players_hands):
             if win_rate > best_score:
                 best_score = win_rate
                 best_combo = list(combo)
-        readable = [convert_to_symbol(Card.int_to_str(c).replace("T", "10")) for c in best_combo]
+        readable = [convert_to_symbol(c) for c in best_combo]
         best_combos.append({'best_cards': readable, 'win_rate': round(best_score * 100, 2)})
     return best_combos
 
