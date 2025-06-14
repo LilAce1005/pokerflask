@@ -7,12 +7,7 @@ app = Flask(__name__)
 evaluator = Evaluator()
 SIMULATIONS = 1000
 
-SUIT_SYMBOLS = {
-    's': '♠',
-    'h': '♥',
-    'd': '♦',
-    'c': '♣'
-}
+SUIT_SYMBOLS = {'s': '♠','h': '♥','d': '♦','c': '♣'}
 SUIT_MAP = {v: k for k, v in SUIT_SYMBOLS.items()}
 
 def convert_to_treys(cards):

@@ -1,2 +1,81 @@
-<h1>幸運賽模擬器</h1>
-<p>請加入 UI</p>
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>幸運賽模擬器</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f1f1f1; text-align: center; }
+        .table { margin: 50px auto; background: #b25900; border-radius: 50%; width: 700px; height: 400px; position: relative; }
+        .player { position: absolute; }
+        .cards { margin-top: 5px; }
+        .card { display: inline-block; padding: 5px 8px; margin: 2px; color: #fff; border-radius: 4px; font-weight: bold; }
+        .card[data-suit="♠"] { background: #000; }
+        .card[data-suit="♥"] { background: red; }
+        .card[data-suit="♦"] { background: blue; }
+        .card[data-suit="♣"] { background: green; }
+    </style>
+</head>
+<body>
+    <h1>幸運賽模擬器</h1>
+    <label>玩家人數：
+        <select id="playerCount">
+            <option>2</option><option>3</option><option>4</option><option>5</option><option selected>6</option><option>7</option><option>8</option>
+        </select>
+    </label>
+    <button onclick="deal()">重新發牌</button>
+    <div class="table" id="table"></div>
+
+<script>
+function suit(card) {
+    return card.slice(-1);
+}
+
+function createCardHTML(card) {
+    const el = document.createElement("div");
+    el.className = "card";
+    el.dataset.suit = suit(card);
+    el.textContent = card;
+    return el;
+}
+
+function deal() {
+    const playerCount = +document.getElementById("playerCount").value;
+    const suits = ["♠", "♥", "♦", "♣"];
+    const ranks = ["A","K","Q","J","10","9","8","7","6","5","4","3","2"];
+    let deck = [];
+    for (const s of suits) for (const r of ranks) deck.push(r+s);
+    deck = deck.sort(() => Math.random() - 0.5);
+    const hands = Array.from({length: playerCount}, () => deck.splice(0,3));
+    fetch("/bestcombo", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({players: hands})
+    }).then(r => r.json()).then(results => {
+        const table = document.getElementById("table");
+        table.innerHTML = "";
+        hands.forEach((hand, i) => {
+            const player = document.createElement("div");
+            player.className = "player";
+            const angle = (360 / playerCount) * i;
+            const x = 280 * Math.cos(angle * Math.PI / 180);
+            const y = 150 * Math.sin(angle * Math.PI / 180);
+            player.style.left = 300 + x + "px";
+            player.style.top = 180 + y + "px";
+            player.style.transform = "translate(-50%,-50%)";
+            player.innerHTML = `<div>Player ${i+1}<br>勝率：${results[i].win_rate}%</div>`;
+            const cards = document.createElement("div");
+            cards.className = "cards";
+            for (const c of hand) {
+                const el = createCardHTML(c);
+                if (results[i].best_cards.includes(c)) el.style.border = "2px solid gold";
+                cards.appendChild(el);
+            }
+            player.appendChild(cards);
+            table.appendChild(player);
+        });
+    });
+}
+deal();
+</script>
+</body>
+</html>
