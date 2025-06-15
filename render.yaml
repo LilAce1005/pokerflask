@@ -1,7 +1,5 @@
-services:
-  - type: web
-    name: pokerflask
-    env: python
-    plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: python app.py
+type: web
+name: pokerflask
+runtime: python
+buildCommand: pip install -r requirements.txt
+startCommand: python app.py
